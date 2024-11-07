@@ -63,38 +63,38 @@ public class MyFrame extends JPanel implements KeyListener {
   private Thread startScreenThread;
 
   public MyFrame() {
-      setLayout(null);
-      this.addKeyListener(this);
-      this.setFocusable(true); 
-      this.requestFocusInWindow();
+    setLayout(null);
+    this.addKeyListener(this);
+    this.setFocusable(true); 
+    this.requestFocusInWindow();
 
-      // Set up background layers
-      backgroundLayer11 = new ParallaxBackground(0, 0, 0, "images/backgroud/bg2/bg2-1.png");
-      backgroundLayer12 = new ParallaxBackground(0, 24, 2, "images/backgroud/bg2/bg2-2-cloud.png");
-      backgroundLayer13 = new ParallaxBackground(0, 284, 3, "images/backgroud/bg2/bg2-3-Sea.png");
-      tileLayer1 = new ParallaxBackground(0, 350, 5, "images/backgroud/bg2/bg2-5-tillsets.png");
+    // Set up background layers
+    backgroundLayer11 = new ParallaxBackground(0, 0, 0, "images/backgroud/bg2/bg2-1.png");
+    backgroundLayer12 = new ParallaxBackground(0, 24, 2, "images/backgroud/bg2/bg2-2-cloud.png");
+    backgroundLayer13 = new ParallaxBackground(0, 284, 3, "images/backgroud/bg2/bg2-3-Sea.png");
+    tileLayer1 = new ParallaxBackground(0, 350, 5, "images/backgroud/bg2/bg2-5-tillsets.png");
 
-      backgroundLayer21 = new ParallaxBackground(0, 0, 1, "images/backgroud/bg1/bg1.png");
-      backgroundLayer22 = new ParallaxBackground(10, -10, 1, "images/backgroud/bg1/bg1-1-cloud.png");
-      backgroundLayer23 = new ParallaxBackground(0, 195, 2, "images/backgroud/bg1/bg1-2.png");
-      backgroundLayer24 = new ParallaxBackground(0, 270, 2, "images/backgroud/bg1/bg1-3-grass.png");
-      backgroundLayer25 = new ParallaxBackground(20, 260, 2, "images/backgroud/bg1/bg1-4-bush.png");
-      backgroundLayer26 = new ParallaxBackground(20, -30, 1, "images/backgroud/bg1/bg1-5-tree.png");
-      backgroundLayer27 = new ParallaxBackground(0, 302, 2, "images/backgroud/bg1/bg1-6-grass.png");
-      tileLayer2 = new ParallaxBackground(0, 350, 5, "images/backgroud/bg1/bg1-7-tillset.png");
+    backgroundLayer21 = new ParallaxBackground(0, 0, 1, "images/backgroud/bg1/bg1.png");
+    backgroundLayer22 = new ParallaxBackground(10, -10, 1, "images/backgroud/bg1/bg1-1-cloud.png");
+    backgroundLayer23 = new ParallaxBackground(0, 195, 2, "images/backgroud/bg1/bg1-2.png");
+    backgroundLayer24 = new ParallaxBackground(0, 270, 2, "images/backgroud/bg1/bg1-3-grass.png");
+    backgroundLayer25 = new ParallaxBackground(20, 260, 2, "images/backgroud/bg1/bg1-4-bush.png");
+    backgroundLayer26 = new ParallaxBackground(20, -30, 1, "images/backgroud/bg1/bg1-5-tree.png");
+    backgroundLayer27 = new ParallaxBackground(0, 302, 2, "images/backgroud/bg1/bg1-6-grass.png");
+    tileLayer2 = new ParallaxBackground(0, 350, 5, "images/backgroud/bg1/bg1-7-tillset.png");
 
-      StartScreenHandler startScreenHandler = new StartScreenHandler(this);
-      startScreenThread = new Thread(startScreenHandler);
-      startScreenThread.start(); // Start the thread for the start screen
+    StartScreenHandler startScreenHandler = new StartScreenHandler(this);
+    startScreenThread = new Thread(startScreenHandler);
+    startScreenThread.start(); // Start the thread for the start screen
 
-      // Initial random obstacle selection
-      chooseRandomObstacle();
+    // Initial random obstacle selection
+    chooseRandomObstacle();
 
-      Timer gameLoop = new Timer(30, e -> {
-          updateGame();
-          repaint();
-      });
-      gameLoop.start(); // Start the game loop
+    // Timer gameLoop = new Timer(30, e -> {
+    //     updateGame();
+    //     repaint();
+    // });
+    // gameLoop.start(); // Start the game loop
   }
 
   @Override
@@ -179,11 +179,18 @@ public class MyFrame extends JPanel implements KeyListener {
   }
 
   public void startGame() {
+    System.out.println("Starting the game...");
     gameStarted = true;
     timeRemaining = 20; // Reset time on game start
     obstacles.clear();  // Clear obstacles from the previous game
     chooseRandomObstacle();  // Initial obstacle generation
     startCountdownTimer();  // Start countdown timer
+
+    Timer gameLoop = new Timer(30, e -> {
+      updateGame();
+      repaint();
+    });
+    gameLoop.start();
   }
 
   public void updateGame() {
@@ -266,9 +273,7 @@ public class MyFrame extends JPanel implements KeyListener {
   private void checkCollisions() {
     for (Obstacle obs : obstacles) {
       if (checkEvent.checkHit(chick, obs)) {
-        // Increment hit count
         hitCount++;
-
         if (hitCount >= 1) {
           gameOver = true;
           countdownTimer.stop();
