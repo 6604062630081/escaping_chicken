@@ -13,7 +13,6 @@ public class Dino extends Obstacle {
   }
   @Override
     public void draw(Graphics g) {
-
         // Draw the scaled image at its current x, y position
         g.drawImage(obstacleImage, x, y, 75, 75, null);
     }

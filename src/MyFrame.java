@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class MyFrame extends JPanel implements KeyListener {
-  private static final int GAME_SPEED = 20; 
+  private static final int GAME_SPEED = 20;
   private static final int JUMP_HEIGHT = 60;
   private static final int TIME_LIMIT = 20;
   public int gameSpeed = GAME_SPEED;
@@ -28,7 +28,7 @@ public class MyFrame extends JPanel implements KeyListener {
   private ArrayList<Obstacle> obstacles = new ArrayList<>();
   private Random random = new Random();
 
-  //bg1
+  // Background Layers
   private ParallaxBackground backgroundLayer21;
   private ParallaxBackground backgroundLayer22;
   private ParallaxBackground backgroundLayer23;
@@ -37,7 +37,6 @@ public class MyFrame extends JPanel implements KeyListener {
   private ParallaxBackground backgroundLayer26;
   private ParallaxBackground backgroundLayer27;
   private ParallaxBackground tileLayer2;
-  //bg2
   private ParallaxBackground backgroundLayer11;
   private ParallaxBackground backgroundLayer12;
   private ParallaxBackground backgroundLayer13;
@@ -45,27 +44,27 @@ public class MyFrame extends JPanel implements KeyListener {
 
   private ParallaxBackground bgStart = new ParallaxBackground(0, 0, 1, "images/backgroud/bg2/bg2-start.png");
   private ParallaxBackground bgOver = new ParallaxBackground(0, 0, 1, "images/backgroud/bg1/bg1-over.png");
-  private ParallaxBackground titleImage = new ParallaxBackground(90,-50,1,"images/backgroud/bg2/title1-2.png");
-  private ParallaxBackground chickIdle = new ParallaxBackground(215,110, 0, "images/ChickenPack/gif/ChickenIdle.gif");
+  private ParallaxBackground titleImage = new ParallaxBackground(90, -50, 1, "images/backgroud/bg2/title1-2.png");
+  private ParallaxBackground chickIdle = new ParallaxBackground(215, 110, 0, "images/ChickenPack/gif/ChickenIdle.gif");
 
-  // time limit
+  // time limit and countdown timer
   private int timeRemaining = TIME_LIMIT;
   private Timer countdownTimer;
 
-  // font
-  private Font customFont = FontLoader.loadCustomFont("src/components/font/SuperMarioBros. NES.ttf", 16);
-
-  // game over 
+  // game Over 
   private int hitCount = 0;
   private boolean gameOver = false;
   private boolean gameStarted = false;
 
-  private Thread startScreenThread;
+  // font
+  private Font customFont = FontLoader.loadCustomFont("src/components/font/SuperMarioBros. NES.ttf", 16);
+
+  private Timer gameLoop; 
 
   public MyFrame() {
     setLayout(null);
     this.addKeyListener(this);
-    this.setFocusable(true); 
+    this.setFocusable(true);
     this.requestFocusInWindow();
 
     // Set up background layers
@@ -84,17 +83,19 @@ public class MyFrame extends JPanel implements KeyListener {
     tileLayer2 = new ParallaxBackground(0, 350, 5, "images/backgroud/bg1/bg1-7-tillset.png");
 
     StartScreenHandler startScreenHandler = new StartScreenHandler(this);
-    startScreenThread = new Thread(startScreenHandler);
+    Thread startScreenThread = new Thread(startScreenHandler);
     startScreenThread.start(); // Start the thread for the start screen
 
     // Initial random obstacle selection
     chooseRandomObstacle();
 
-    // Timer gameLoop = new Timer(30, e -> {
-    //     updateGame();
-    //     repaint();
-    // });
-    // gameLoop.start(); // Start the game loop
+    // Create the game loop timer once in the constructor
+    gameLoop = new Timer(30, e -> {
+        if (gameStarted && !gameOver) {
+            updateGame();
+            repaint();
+        }
+    });
   }
 
   @Override
@@ -108,7 +109,6 @@ public class MyFrame extends JPanel implements KeyListener {
       g2.setFont(customFont);
       if (timeRemaining <= 0) {
           g2.drawString("YOU GOT OUT!", 350, 200);
-          g2.drawString("", 350, 230);
       } else {
           g2.drawString("Game Over!", 350, 200);
           g2.drawString("YOU GOT CAPTURED BACK!", 260, 230);
@@ -129,19 +129,19 @@ public class MyFrame extends JPanel implements KeyListener {
     // Draw the background layers
     else {
       if (timeRemaining > TIME_LIMIT / 2) {
-        backgroundLayer11.draw(g, 850, 450);
-        backgroundLayer12.draw(g, 850, 368);
-        backgroundLayer13.draw(g, 850, 139);
-        tileLayer1.draw(g, 850, 72);
+          backgroundLayer11.draw(g, 850, 450);
+          backgroundLayer12.draw(g, 850, 368);
+          backgroundLayer13.draw(g, 850, 139);
+          tileLayer1.draw(g, 850, 72);
       } else {
-        backgroundLayer21.draw(g, 850, 450);
-        backgroundLayer22.draw(g, 850, 259);
-        backgroundLayer23.draw(g, 850, 120);
-        backgroundLayer24.draw(g, 850, 100);
-        backgroundLayer25.draw(g, 850, 69);
-        backgroundLayer26.draw(g, 850, 375);
-        backgroundLayer27.draw(g, 850, 120);
-        tileLayer2.draw(g, 850, 72);
+          backgroundLayer21.draw(g, 850, 450);
+          backgroundLayer22.draw(g, 850, 259);
+          backgroundLayer23.draw(g, 850, 120);
+          backgroundLayer24.draw(g, 850, 100);
+          backgroundLayer25.draw(g, 850, 69);
+          backgroundLayer26.draw(g, 850, 375);
+          backgroundLayer27.draw(g, 850, 120);
+          tileLayer2.draw(g, 850, 72);
       }
       // Draw the chicken and the obstacle (dog or dino)
       Graphics2D g2 = (Graphics2D) g;
@@ -166,6 +166,8 @@ public class MyFrame extends JPanel implements KeyListener {
       if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_SPACE) {
           if (!gameStarted) {
               startGame();  // Start the game when the player presses a key to start
+          } else if (gameOver) {
+              startGame();
           } else {
               chick.jump(this);
               this.repaint();
@@ -180,17 +182,24 @@ public class MyFrame extends JPanel implements KeyListener {
 
   public void startGame() {
     System.out.println("Starting the game...");
+    gameOver = false;
     gameStarted = true;
-    timeRemaining = 20; // Reset time on game start
+    timeRemaining = TIME_LIMIT; // Reset time on game start
+    hitCount = 0; // Reset hit count
     obstacles.clear();  // Clear obstacles from the previous game
     chooseRandomObstacle();  // Initial obstacle generation
+
+    // Stop the previous countdown timer if it exists
+    if (countdownTimer != null) {
+        countdownTimer.stop();
+    }
+
     startCountdownTimer();  // Start countdown timer
 
-    Timer gameLoop = new Timer(30, e -> {
-      updateGame();
-      repaint();
-    });
-    gameLoop.start();
+    // If the game loop was stopped, start it again
+    if (!gameLoop.isRunning()) {
+        gameLoop.start();
+    }
   }
 
   public void updateGame() {
@@ -218,81 +227,79 @@ public class MyFrame extends JPanel implements KeyListener {
     obstacles.removeAll(toRemove);
 
     checkCollisions();
-    if (random.nextInt(100) < 1) { 
+    if (random.nextInt(100) < 1) {
         chooseRandomObstacle();
     }
   }
 
   private void chooseRandomObstacle() {
-    int minDistance = 345;
+      int minDistance = 345;
+      // type of obstacle: 0 for Dog, 1 for Dino
+      int obstacleChoice = random.nextInt(2);
 
-    // Randomly choose the type of obstacle: 0 for Dog, 1 for Dino
-    int obstacleChoice = random.nextInt(2);
+      int startY = 315;
+      // Random speed for obstacles
+      int speed = 3 + random.nextInt(2);
+      int startX = 900 + random.nextInt(300);
+      boolean isTooClose = true;  // Start by assuming the obstacle will be too close
+      int maxAttempts = 10; // Prevent infinite loop (failsafe)
+      int attempts = 0;
 
-    int startY = 315;
-    // Random speed for obstacles
-    int speed = 3 + random.nextInt(2);
-    int startX = 900 + random.nextInt(300);
-    boolean isTooClose = true;  // Start by assuming the obstacle will be too close
-    int maxAttempts = 10; // Prevent infinite loop (failsafe)
-    int attempts = 0;
-
-    while (isTooClose && attempts < maxAttempts) {
-      isTooClose = false;
-      for (Obstacle obstacle : obstacles) {
-          if (Math.abs(obstacle.x - startX) < minDistance) {
-              isTooClose = true;
-              break;
+      while (isTooClose && attempts < maxAttempts) {
+          isTooClose = false;
+          for (Obstacle obstacle : obstacles) {
+              if (Math.abs(obstacle.x - startX) < minDistance) {
+                  isTooClose = true;
+                  break;
+              }
           }
+
+          if (isTooClose) {
+              startX = 850 + random.nextInt(300);
+          }
+
+          attempts++; // Increment attempt counter
+      }
+      if (attempts >= maxAttempts) {
+          return; // Skip obstacle creation if no suitable position found
       }
 
-      if (isTooClose) {
-          startX = 850 + random.nextInt(300);
+      Obstacle newObstacle;
+      if (obstacleChoice == 0) {
+          newObstacle = new Dog(startX, startY, speed, this);
+      } else {
+          newObstacle = new Dino(startX, startY - 5, speed, this);
       }
-
-      attempts++; // Increment attempt counter
-    }
-    //give up if cannot find
-    if (attempts >= maxAttempts) {
-        // System.out.println("Warning: Unable to find a suitable position for a new obstacle.");
-        return; // Skip obstacle creation
-    }
-
-    // Create the new obstacle
-    Obstacle newObstacle;
-    if (obstacleChoice == 0) {
-        newObstacle = new Dog(startX, startY, speed, this);
-    } else {
-        newObstacle = new Dino(startX, startY - 5, speed, this);
-    }
-
-    newObstacle.loadImage();  // Load the image for the new obstacle
-    obstacles.add(newObstacle);  // Add the new obstacle to the list
+      newObstacle.loadImage();
+      obstacles.add(newObstacle);
   }
 
   private void checkCollisions() {
     for (Obstacle obs : obstacles) {
-      if (checkEvent.checkHit(chick, obs)) {
-        hitCount++;
-        if (hitCount >= 1) {
-          gameOver = true;
-          countdownTimer.stop();
+        if (checkEvent.checkHit(chick, obs)) {
+            hitCount++;
+            if (hitCount >= 1) {
+                gameOver = true;
+                countdownTimer.stop();
+            }
+            break;
         }
-        break; 
-      }
     }
   }
 
   private void startCountdownTimer() {
-      countdownTimer = new Timer(1000, e -> {
-          if (timeRemaining > 0) {
-              timeRemaining--;
-          } else {
-              gameOver = true;
-              System.out.println("TIME'S UP");
-              countdownTimer.stop();
-          }
-      });
-      countdownTimer.start(); 
+    System.out.println("Starting countdown timer...");
+    countdownTimer = new Timer(1000, e -> {
+        if (timeRemaining > 0) {
+            timeRemaining--;
+        } else {
+            gameOver = true;
+            System.out.println("TIME'S UP");
+            countdownTimer.stop();
+        }
+    });
+    countdownTimer.start();
   }
 }
+
+

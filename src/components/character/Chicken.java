@@ -6,11 +6,9 @@ import javax.swing.JPanel;
 
 public class Chicken {
     public int x, y;
-    public int health = 180;
     private Image standingImage; 
     private Image jumpingImage;  
     private Image currentImage;  //tracking
-    private Image healthImage;
     
     private boolean isJumping = false;
     private int jumpHeight = 60;        // How high the chicken jumps
@@ -33,17 +31,6 @@ public class Chicken {
         g.drawImage(currentImage, x, y, 50, 50, null);
     }
 
-    public void drawChickHealth(Graphics g) {
-        g.drawImage(healthImage, x, y, null);
-    }
-
-    public void reduceHealth() {
-        health -= 90;
-    }
-
-    public int getHealth() { 
-        return health; 
-    }
     public int getWidth() {
       return currentImage.getWidth(null);  // Return the width of the current image
     }
